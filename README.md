@@ -48,7 +48,7 @@ Done
 Once a `RETracker` firmware is successfully built, it should be copied to the `Tracker's` `"/firmware/"` folder on the root of its SD card.
 The firmware flashing procedure is straight forward and doesn't differ from the ordinary process.
 
-One the device
+On the device
 * press the `config` button
 * go to the `Firmware` menu
 * enter the `Firmware update` sub menu
