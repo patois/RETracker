@@ -149,7 +149,7 @@ Dumping 0002B99D-0002BA9D
 Whereas some of the more common command line options allow memory to be written, read and hex-dumped, the more exciting features are probably the `-e` and `-a` options.
 They allow code to be executed on the device.
 The `-e` option allows code to be branched to directly, for example after having written code/data to the device's memory using the `-w` option.
-Any `address` argument passed to the `retracker.py` command line utility usually can be set or cleared the lowest bit, which then enables/disables Thumb mode, respectively.
+The lowest bit of an `address` argument passed to the `retracker.py` command line utility specifies whether or not to use Thumb mode (0: ARM mode, 1: Thumb mode).
 
 The `-a` command line argument accepts so called `Polyps`, which are Python modules containing patches for the `Polyend Tracker` in the form of assembly routines and version-specific offsets and data.
 
