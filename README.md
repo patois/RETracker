@@ -185,6 +185,6 @@ The firmware can be mapped to base address 0, with address 4 being a pointer to 
 Most, if not all of its code runs in Thumb mode.
 I've found address `0x70100000` and above to be a reliable address to plant a `Polyp` into and run its code from there.
 
-## Disclaimler
+## Disclaimer
 The author does not take any responsibility for any damage this project may cause to your Polyend Tracker.
 By using RETracker or any information derived, you agree that you are using any of this project's code, data and other information at your own risk.
