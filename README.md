@@ -19,7 +19,7 @@ Make sure to [check them out](polyp/) and/or add your own!
 
 Adding to that, the memory reading/writing functions allow the USB host to inspect the `Tracker's` memory by creating hex-dumps or by disassembling code in ARM or Thumb mode.
 
-Finally, the file transfer (currently the only direction implemented is *from* the USB host *to* the `Tracker's` SD card) allow new firmware files or `NES` roms to be transferred, without having to go through the intended process of swapping the SD card between the `Tracker` and your computer.
+Finally, the file transfer function (currently the only direction implemented is *from* the USB host *to* the `Tracker's` SD card) allows new firmware files or `NES` roms to be copied to the Tracker, without having to go through the intended process of swapping the SD card between the `Tracker` and your computer.
 
 HAPPY HACKING!
 ## Installation
