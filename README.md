@@ -23,7 +23,7 @@ Finally, the file transfer function (currently the only direction implemented is
 
 HAPPY HACKING!
 ## Installation
-First of all, RETracker requires a number of [dependencies](DEPENDENCIES.md) to be installed.
+First of all, on top of a Python 3 installation, RETracker requires a number of [dependencies](DEPENDENCIES.md) to be installed.
 Please check them out and make sure you have them all installed before you go on.
 
 Once all dependencies are installed, a patched firmware can be created by running [build_fw.py](build_fw.py).
