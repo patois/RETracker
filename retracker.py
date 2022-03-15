@@ -5,6 +5,109 @@ import tools.asm as asm
 from importlib import import_module
 from datetime import datetime
 
+# ------------------------------------------------------------------
+def dumphex(ti, args):
+    addr = int(args.hexdump[0],16)
+    size = int(args.hexdump[1],16)
+    print("Dumping %08X-%08X\n" % (addr, addr+size))
+    data = ti.read_mem(addr, size)
+    if data:
+        print(hexdump.hexdump(data, addr))
+    else:
+        print("Dumping memory failed")
+
+# ------------------------------------------------------------------
+def disassemble(ti, args):
+    addr_and_mode = int(args.disassemble[0],16)
+    addr = addr_and_mode & (~1)
+    mode = addr_and_mode & 1
+    size = int(args.disassemble[1],16)
+    print("Disassembling %08X-%08X in %s mode\n" % (addr, addr+size, "Thumb" if mode else "ARM"))
+    code = ti.read_mem(addr, size)
+    if code:
+        d = asm.Disassembler()
+        d.disassemble(code, addr_and_mode)
+        print(d.get())
+    else:
+        print("Reading memory failed")
+
+# ------------------------------------------------------------------
+def readmem(ti, args):
+    addr = int(args.readmem[0], 16)
+    size = int(args.readmem[1], 16)
+    filename = args.readmem[2]
+    try:
+        f = open(filename,"wb")
+    except:
+        print("Error creating output file. Aborting")
+        return
+    print("Dumping %08X-%08X\n" % (addr, addr+size))
+    data = ti.read_mem(addr, size)
+    if data:
+        f.write(data)
+        f.close()
+    print("Reading memory was %ssuccessful" % ("" if data else "un"))
+
+# ------------------------------------------------------------------
+def writemem(ti, args):
+    addr = int(args.writemem[0], 16)
+    data = bytes.fromhex(args.writemem[1])
+    print("Writing data to address %x" % addr)
+    success = ti.write_mem(addr, data)
+    print("Writing to memory %ssuccessful" % ("" if success else "un"))
+
+# ------------------------------------------------------------------
+def transfer(ti, args):
+    srcfile = args.transfer[0]
+    dstfile = args.transfer[1]
+    print("File transfer in progress")
+    with open(srcfile, "rb") as f:
+        data = f.read()
+        start = datetime.now()
+        success = ti.write_file(dstfile, data)
+        end = datetime.now()
+        print("File transfer %ssuccessful (time: %s)" % ("" if success else "un", end-start))
+
+# ------------------------------------------------------------------
+def exec(ti, args):
+    addr = int(args.exec[0], 16)
+    print("Running code at address %x" % addr)
+    print("Returned buffer:\n%s" % hexdump.hexdump(ti.exec(addr)))
+
+# ------------------------------------------------------------------
+def assemble(ti, args):
+        mod = import_module(args.assemble[0])
+        polyp = mod.get_polyp(ti)
+        if not polyp:
+            print("Current firmware not supported. Aborting")
+            return
+
+        patches = polyp.get_patches()
+        i = 0
+        for patch in patches:
+            i += 1
+            print("Assembling patch #%d" % i)
+            a = asm.Assembler(
+                patch.entry,
+                patch.code,
+                symbols=patch.symbols,
+                thumb=patch.thumbmode)
+            print("Description: \"%s\"" % patch.description)
+            print("Target address: %08X" % patch.entry)
+            print("Mode: %s" % ("thumb" if patch.thumbmode else "arm"))
+            if not a.assemble():
+                print("Failed! Aborting...")
+                return
+            data = a.get_as_hex_string()          
+            print("Patching memory")
+            ti.write_mem(patch.entry, bytes.fromhex(data))
+
+        print("Running code...")
+        args = args.polypargs
+        polyp.run(args)
+        print("Done")
+
+# ------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser()
     x = parser.add_mutually_exclusive_group()
@@ -15,7 +118,7 @@ def main():
     x.add_argument("-w", "--writemem",
         nargs=2,
         metavar=("ADDRESS", "DATA"),
-        help="Write memory. Example: %(prog)s -w 70100000 4141ACAB4141")
+        help="Write hex-encoded string to memory ADDRESS. Example: %(prog)s -w 70100000 4141ACAB4141")
     x.add_argument("-x", "--hexdump",
         nargs=2,
         metavar=("ADDRESS", "SIZE"),
@@ -63,99 +166,25 @@ def main():
     if not (tracker_ver[0] >= 1 and
             tracker_ver[1] >= 5 and
             tracker_ver[2] >= 0 and
-            patch_ver[0] >= 0 and
             patch_ver[1] >= 3):
         print("Version not supported. aborting")
         return
 
     if args.hexdump:
-        addr = int(args.hexdump[0],16)
-        size = int(args.hexdump[1],16)
-        print("Dumping %08X-%08X\n" % (addr, addr+size))
-        data = ti.read_mem(addr, size)
-        if data:
-            print(hexdump.hexdump(data, addr))
-        else:
-            print("Dumping memory failed")
+        dumphex(ti, args)
     elif args.disassemble:
-        addr_and_mode = int(args.disassemble[0],16)
-        addr = addr_and_mode & (~1)
-        mode = addr_and_mode & 1
-        size = int(args.disassemble[1],16)
-        print("Disassembling %08X-%08X in %s mode\n" % (addr, addr+size, "Thumb" if mode else "ARM"))
-        code = ti.read_mem(addr, size)
-        if code:
-            d = asm.Disassembler()
-            d.disassemble(code, addr_and_mode)
-            print(d.get())
-        else:
-            print("Reading memory failed")
+        disassemble(ti, args)
     elif args.readmem:
-        addr = int(args.readmem[0], 16)
-        size = int(args.readmem[1], 16)
-        filename = args.readmem[2]
-        try:
-            f = open(filename,"wb")
-        except:
-            print("Error creating output file. Aborting")
-            return
-        print("Dumping %08X-%08X\n" % (addr, addr+size))
-        data = ti.read_mem(addr, size)
-        if data:
-            f.write(data)
-            f.close()
-        print("Reading memory was %ssuccessful" % ("" if data else "un"))
+        readmem(ti, args)
     elif args.writemem:
-        addr = int(args.writemem[0], 16)
-        data = bytes.fromhex(args.writemem[1])
-        print("Writing data to address %x" % addr)
-        success = ti.write_mem(addr, data)
-        print("Writing to memory %ssuccessful" % ("" if success else "un"))
+        writemem(ti, args)
     elif args.transfer:
-        srcfile = args.transfer[0]
-        dstfile = args.transfer[1]
-        print("File transfer in progress")
-        with open(srcfile, "rb") as f:
-            data = f.read()
-            start = datetime.now()
-            success = ti.write_file(dstfile, data)
-            end = datetime.now()
-            print("File transfer %ssuccessful (time: %s)" % ("" if success else "un", end-start))
+        transfer(ti, args)
     elif args.exec:
-        addr = int(args.exec[0], 16)
-        print("Running code at address %x" % addr)
-        print("Returned buffer:\n%s" % hexdump.hexdump(ti.exec(addr)))
+        exec(ti, args)
     elif args.assemble:
-        mod = import_module(args.assemble[0])
-        polyp = mod.get_polyp(ti)
-        if not polyp:
-            print("Current firmware not supported. Aborting")
-            return
+        assemble(ti, args)
 
-        patches = polyp.get_patches()
-        i = 0
-        for patch in patches:
-            i += 1
-            print("Assembling patch #%d" % i)
-            a = asm.Assembler(
-                patch.entry,
-                patch.code,
-                symbols=patch.symbols,
-                thumb=patch.thumbmode)
-            print("Description: \"%s\"" % patch.description)
-            print("Target address: %08X" % patch.entry)
-            print("Mode: %s" % ("thumb" if patch.thumbmode else "arm"))
-            if not a.assemble():
-                print("Failed! Aborting...")
-                return
-            data = a.get_as_hex_string()          
-            print("Patching memory")
-            ti.write_mem(patch.entry, bytes.fromhex(data))
-
-        print("Running code...")
-        args = args.polypargs
-        polyp.run(args)
-        print("Done")
-
+# ------------------------------------------------------------------
 if __name__ == "__main__":
     main()
