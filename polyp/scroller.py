@@ -132,10 +132,11 @@ class Scroller(Polyp):
         for x in range (0xc, CHAR_DISTANCE-(len(s)+1)*CHAR_DISTANCE, -1):
             self._print(s, x, delay=delay)
 
-    def run(self):
+    def run(self, args=None):
+        text = args[0] if args else "RETracker"
         try:
             while True:
-                self._scroll("RETracker")
+                self._scroll(text)
         except:
             self._clear_frame()
             self._draw_frame()

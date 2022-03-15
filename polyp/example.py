@@ -21,11 +21,15 @@ bx      lr
 # symbols used by above assembly routine
 sym = {"addr_screen_brightness":0x2000566a}
 
-# an instance of the memory.Polyp class should
-# implement a run() method at a minimum
 class ExamplePolyp(Polyp):
-    def run(self):
+    # an instance of the memory.Polyp class should
+    # implement a run() method at a minimum
+    # "args" is a list of optional arguments that
+    # can be passed to Polyps by providing the
+    # "--polypargs" option to retracker.py
+    def run(self, args):
         """this method is run after successful assembly of all patches"""
+        print("arguments provided: %s" % args)
         # setting the lowest bit causes the code
         # to be executed in thumb mode (clearing it, in ARM mode)
         data = self.ti.exec(DST_ADDR | 1)

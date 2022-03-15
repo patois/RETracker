@@ -43,7 +43,7 @@ class FlashScreen(Polyp):
         for i in range(brightness):
             self._set_brightness(i)
 
-    def run(self):
+    def run(self, args):
         self._flash_screen()
 
 def get_polyp(ti):

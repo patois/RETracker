@@ -27,7 +27,10 @@ def main():
     x.add_argument("-a", "--assemble",
         nargs=1,
         metavar=("POLYP"),
-        help="Load POLYP patchfile Example: %(prog)s -a polyp.flashscreen")
+        help="Assemble and execute POLYP patchfile Example: %(prog)s -a polyp.scroller --polypargs \"hi there!\"")
+    parser.add_argument("--polypargs",
+        nargs="+",
+        help="Optional arguments that can be passed to a POLYP")
     x.add_argument("-e", "--exec",
         nargs=1,
         metavar=("ADDRESS"),
@@ -150,7 +153,8 @@ def main():
             ti.write_mem(patch.entry, bytes.fromhex(data))
 
         print("Running code...")
-        polyp.run()
+        args = args.polypargs
+        polyp.run(args)
         print("Done")
 
 if __name__ == "__main__":

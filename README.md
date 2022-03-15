@@ -75,8 +75,8 @@ From there on, the `Polyend Tracker` can be communicated with by plugging it int
 The main workhorse of this project probably is `retracker.py`, which provides a command line interface to the user.
 ```
 # python retracker.py -h
-usage: retracker.py [-h]
-                    [-r ADDRESS SIZE FILE | -w ADDRESS DATA | -x ADDRESS SIZE | -d ADDRESS SIZE | -a POLYP | -e ADDRESS | -t SRC_FILENAME DST_FILENAME]
+usage: retracker.py [-h] [-r ADDRESS SIZE FILE] [-w ADDRESS DATA] [-x ADDRESS SIZE] [-d ADDRESS SIZE] [-a POLYP]
+                    [--polypargs POLYPARGS [POLYPARGS ...]] [-e ADDRESS] [-t SRC_FILENAME DST_FILENAME]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -89,7 +89,10 @@ optional arguments:
   -d ADDRESS SIZE, --disassemble ADDRESS SIZE
                         Disassemble code at ADDRESS (ARM/Thumb aware). Example: retracker.py -d 3c01 c000
   -a POLYP, --assemble POLYP
-                        Load POLYP patchfile Example: retracker.py -a polyp.flashscreen
+                        Assemble and execute POLYP patchfile Example: retracker.py -a polyp.scroller --polypargs "hi
+                        there!"
+  --polypargs POLYPARGS [POLYPARGS ...]
+                        Optional arguments that can be passed to a POLYP
   -e ADDRESS, --exec ADDRESS
                         Execute code at ADDRESS (ARM/Thumb aware). Example: retracker.py -e 70100001
   -t SRC_FILENAME DST_FILENAME, --transfer SRC_FILENAME DST_FILENAME

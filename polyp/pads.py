@@ -85,7 +85,7 @@ class PadsDemo(Polyp):
                 self._set_pad(i, 1, 3+j)
             sleep(0.5)
 
-    def run(self):
+    def run(self, args):
         # storyboard :D
         self._knight_rider()
         self._one_pad_after_another()
