@@ -1,3 +1,4 @@
+from http.client import NON_AUTHORITATIVE_INFORMATION
 from tracker.firmware import Patch
 from tracker.memory import Polyp
 from hexdump import hexdump
@@ -55,17 +56,23 @@ font_20bit = {
     ".": 0b00000000000000010000
 }
 
+NUM_PAD_ROWS = 4
+NUM_PADS_PER_ROW = 12
+NUM_PADS_TOTAL = NUM_PAD_ROWS * NON_AUTHORITATIVE_INFORMATION
+CHAR_WIDTH = 5
+CHAR_DISTANCE = CHAR_WIDTH + 1
+
 class Scroller(Polyp):
     def __init__(self, ti, patches):
         super().__init__(ti, patches)
-        self.frame = 48*[0]
+        self.frame = NUM_PADS_TOTAL*[0]
     
     def _clear_frame(self):
         for i in range(len(self.frame)):
             self.frame[i] = 0
 
     def _set_pad(self, idx, state, brightness=0xa):
-        if idx >= 0 and idx < 48:
+        if idx >= 0 and idx < NUM_PADS_TOTAL:
             self.ti.exec(DST_ADDR | 1, struct.pack("<IIH", idx, 1 if state else 0, brightness))
 
     def _set_pixel(self, idx, state):
@@ -73,24 +80,40 @@ class Scroller(Polyp):
 
     def _draw_frame(self):
         for i in range(12):
-            self._set_pad(i, self.frame[i])
-            self._set_pad(i+12, self.frame[i+12])
-            self._set_pad(i+24, self.frame[i+24])
-            self._set_pad(i+36, self.frame[i+36])
+            self._set_pad(
+                i,
+                self.frame[i])
+            self._set_pad(
+                i + NUM_PADS_PER_ROW,
+                self.frame[i+NUM_PADS_PER_ROW])
+            self._set_pad(
+                i + NUM_PADS_PER_ROW * 2,
+                self.frame[i+NUM_PADS_PER_ROW*2])
+            self._set_pad(
+                i + NUM_PADS_PER_ROW * 3,
+                self.frame[i+NUM_PADS_PER_ROW*3])
 
     def _draw_char(self, c, x_coord, neg=False):
         shift_mask = 0b10000
-        pt1 = (c >> (3 * 5)) & 0b11111
-        pt2 = (c >> (2 * 5)) & 0b11111
-        pt3 = (c >> (1 * 5)) & 0b11111
+        pt1 = (c >> (3 * CHAR_WIDTH)) & 0b11111
+        pt2 = (c >> (2 * CHAR_WIDTH)) & 0b11111
+        pt3 = (c >> (1 * CHAR_WIDTH)) & 0b11111
         pt4 = c & 0b11111
         # for all 5 bits
-        for _x in range(x_coord, x_coord+5):
+        for _x in range(x_coord, x_coord+CHAR_WIDTH):
             if _x >= 0 and _x < 0xc:
-                self._set_pixel(_x, ((pt1 & shift_mask) != 0) & ~neg)
-                self._set_pixel(_x+0xc, ((pt2 & shift_mask) != 0) & ~neg)
-                self._set_pixel(_x+2*0xc, ((pt3 & shift_mask) != 0) & ~neg)
-                self._set_pixel(_x+3*0xc, ((pt4 & shift_mask) != 0) & ~neg)
+                self._set_pixel(
+                    _x,
+                    ((pt1 & shift_mask) != 0) & ~neg)
+                self._set_pixel(
+                    _x + 0xc,
+                    ((pt2 & shift_mask) != 0) & ~neg)
+                self._set_pixel(
+                    _x + 2*0xc,
+                    ((pt3 & shift_mask) != 0) & ~neg)
+                self._set_pixel(
+                    _x + 3*0xc,
+                    ((pt4 & shift_mask) != 0) & ~neg)
             shift_mask >>= 1
 
     def _print(self, s, x=0, delay=0.001):
@@ -100,13 +123,13 @@ class Scroller(Polyp):
         self._clear_frame()
         for c in s:
             self._draw_char(font_20bit[c], x+offs)
-            offs += 6
+            offs += CHAR_DISTANCE
 
         self._draw_frame()
         sleep(delay)
 
     def _scroll(self, s, delay=0.001):
-        for x in range (0xc, 6-(len(s)+1)*6, -1):
+        for x in range (0xc, CHAR_DISTANCE-(len(s)+1)*CHAR_DISTANCE, -1):
             self._print(s, x, delay=delay)
 
     def run(self):
