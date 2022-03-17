@@ -4,7 +4,7 @@
 It is based on unofficial patches that are applied to the vendor's stock firmware.
 These patches introduce a custom USB handler by replacing the Tracker's existing USB RAWHID handler. 
 
-The `RETracker's` custom USB handler introduces new, non-official features to the `Polyend Tracker` that can be controlled from a computer via USB and also brings back file transfer functionality that has been ([disabled by Polyend with the introduction of firmware v1.4.0](https://github.com/polyend/TrackerBetaTesting/releases/tag/1.4.0)).
+The `RETracker's` custom USB handler introduces new, non-official features to the `Polyend Tracker` that can be controlled from a computer via USB and also brings back file transfer functionality that has been [disabled by Polyend with the introduction of firmware v1.4.0](https://github.com/polyend/TrackerBetaTesting/releases/tag/1.4.0).
 
 
 ![RETracker screenshot](rsrc/retracker.png)
