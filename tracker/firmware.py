@@ -20,6 +20,8 @@ ldrh    r3, [r4]
 cmp     r3, #0xf1
 beq     read_mem
 
+blo     leave_func
+
 cmp     r3, #0xf2
 beq     write_mem
 
@@ -272,7 +274,7 @@ fw_150_hid_patch = Patch(
     # symbols
     symbols = {
         "TRACKER_FIRMWARE_VERSION": pack_version(1,5,0),
-        "CUSTOM_FIRMWARE_VERSION": pack_version(0,3,0),
+        "CUSTOM_FIRMWARE_VERSION": pack_version(0,3,1),
         "memcpy": 0x00003384,
         "memset": 0x000A709C,
         "usb_hid_read": 0x0005D04,

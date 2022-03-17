@@ -152,7 +152,7 @@ def main():
 
     ver = ti.get_version()
     if not ver:
-        print("Firmware version not supported")
+        print("Firmware version not supported or interface currently claimed")
         return
     tracker_ver, patch_ver = ver
     print("Detected fw patch v%d.%d.%d on Tracker firmware v%d.%d.%d\n" % (

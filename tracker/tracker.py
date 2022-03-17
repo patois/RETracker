@@ -14,6 +14,7 @@ class Tracker():
         if dev is None:
             return False
 
+        usb.util.claim_interface(dev, 3)
         # print("detected %s %s (%s)" % (dev.manufacturer, dev.product, dev.serial_number))
 
         # set the active configuration. With no arguments, the first
