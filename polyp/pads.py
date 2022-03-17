@@ -95,6 +95,7 @@ class PadsDemo(Polyp):
         self._fade_all()
         self._flash_all()
         self._all_pads_off()
+        return True
 
 def get_polyp(ti):
     trk_ver, fw_ver = ti.get_version()

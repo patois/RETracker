@@ -141,6 +141,7 @@ class Scroller(Polyp):
             self._clear_frame()
             self._draw_frame()
             self._print("OK", 1)
+        return True
 
 def get_polyp(ti):
     trk_ver, fw_ver = ti.get_version()

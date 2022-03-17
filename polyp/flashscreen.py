@@ -45,6 +45,7 @@ class FlashScreen(Polyp):
 
     def run(self, args):
         self._flash_screen()
+        return True
 
 def get_polyp(ti):
     trk_ver, fw_ver = ti.get_version()

@@ -9,8 +9,7 @@ from datetime import datetime
 # ------------------------------------------------------------------
 def brk(ti, args):
     success = ti.brk()
-    if not success:
-        print("brk() failed, try again?")
+    print("brk!" if success else "Failed. Try again?")
 
 # ------------------------------------------------------------------
 def dumphex(ti, args):
@@ -111,8 +110,8 @@ def assemble(ti, args):
 
         print("Running code...")
         args = args.polypargs
-        polyp.run(args)
-        print("Done")
+        success = polyp.run(args)
+        print("Done" if success else "Failure")
 
 # ------------------------------------------------------------------
 def main():
@@ -121,7 +120,7 @@ def main():
 
     x.add_argument("-b",
         action="store_true",
-        help="hijack execution in a loop until another brk() command is sent. Other commands keep working")
+        help="hijack Tracker's main() until another '-b' command is sent. Other commands keep working")
     x.add_argument("-r", "--readmem",
         nargs=3,
         metavar=("ADDRESS", "SIZE", "FILE"),
@@ -129,7 +128,7 @@ def main():
     x.add_argument("-w", "--writemem",
         nargs=2,
         metavar=("ADDRESS", "DATA"),
-        help="Write hex-encoded string to memory ADDRESS. Example: %(prog)s -w 70100000 4141ACAB4141")
+        help="Write hex-encoded string to memory ADDRESS. Example: %(prog)s -w 70100000 \"41 EC FA414142c0\"")
     x.add_argument("-x", "--hexdump",
         nargs=2,
         metavar=("ADDRESS", "SIZE"),
@@ -181,7 +180,11 @@ def main():
         print("Version not supported. aborting")
         return
 
+    # TODO
     if args.b:
+        if not (patch_ver[1] >= 3 and patch_ver[2] >= 3):
+            print("Error: option requres new RETracker firmware")
+            return
         brk(ti, args)
     elif args.hexdump:
         dumphex(ti, args)
