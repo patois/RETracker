@@ -138,6 +138,12 @@ class Tracker():
         data = self.ep_in.read(0x40)
         return data
 
+    def brk(self):
+        pkt = struct.pack("<HH60s", 0xf7, 0, b"")
+        self.ep_out.write(pkt)
+        data = self.ep_in.read(0x40)
+        return data[0] == 0xf7
+
     def get_version(self):
         """returns tuple of (tracker_fw_version, patch_version)"""
         pkt = struct.pack("<H62s", 0xf3, b"")

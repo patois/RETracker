@@ -5,6 +5,13 @@ import tools.asm as asm
 from importlib import import_module
 from datetime import datetime
 
+
+# ------------------------------------------------------------------
+def brk(ti, args):
+    success = ti.brk()
+    if not success:
+        print("brk() failed, try again?")
+
 # ------------------------------------------------------------------
 def dumphex(ti, args):
     addr = int(args.hexdump[0],16)
@@ -111,6 +118,10 @@ def assemble(ti, args):
 def main():
     parser = argparse.ArgumentParser()
     x = parser.add_mutually_exclusive_group()
+
+    x.add_argument("-b",
+        action="store_true",
+        help="hijack execution in a loop until another brk() command is sent. Other commands keep working")
     x.add_argument("-r", "--readmem",
         nargs=3,
         metavar=("ADDRESS", "SIZE", "FILE"),
@@ -170,7 +181,9 @@ def main():
         print("Version not supported. aborting")
         return
 
-    if args.hexdump:
+    if args.b:
+        brk(ti, args)
+    elif args.hexdump:
         dumphex(ti, args)
     elif args.disassemble:
         disassemble(ti, args)
