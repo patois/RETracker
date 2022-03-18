@@ -6,21 +6,20 @@ SYMBOLS = {"addr_screen_brightness":0x2000566a}
 
 DST_ADDR_GET_BRIGHTNESS = 0x70100020
 imp_get_brightness = """
-ldr     r6, =addr_screen_brightness
-ldrb    r2, [r6, #1]
+ldr     r3, =addr_screen_brightness
+ldrb    r2, [r3, #1]
 strb    r2, [r1]
 bx      lr
 """
 
 DST_ADDR_SET_BRIGHTNESS = 0x70100060
 imp_set_brightness = """
-push    {lr}
 ldr     r1, [r0, #8]
-ldr     r6, =addr_screen_brightness
+ldr     r3, =addr_screen_brightness
 lsl     r1, r1, #8
 add     r1, r1, 1
-strh    r1, [r6]
-pop     {pc}
+strh    r1, [r3]
+bx      lr
 """
 
 class FlashScreen(Polyp):
@@ -45,6 +44,7 @@ class FlashScreen(Polyp):
 
     def run(self, args):
         self._flash_screen()
+        return True
 
 def get_polyp(ti):
     trk_ver, fw_ver = ti.get_version()

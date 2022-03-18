@@ -1,254 +1,399 @@
 import struct
 
+# TODO: optimize, annotate
+handle_raw_hid = """
+; #######################
+; # entry:
 
-new_hid_handler = """
-push.w  {r4-r8,lr}
+    push.w  {r4,lr}
 
-mov     r2, #0x40
-sub     sp, sp, #0x200
-mov     r4, r0
-mov     r1, #0
-bl      memset
+    mov     r2, #0x40
+    mov     r4, r0
+    mov     r1, #0
+    bl      memset
 
-mov     r1, #0
-mov     r0, r4
-bl      usb_hid_read
-cmp     r0, #0
-ble     leave_func
+    mov     r1, #0
+    mov     r0, r4
+    bl      usb_hid_read
 
-ldrh    r3, [r4]
-cmp     r3, #0xf1
-beq     read_mem
+    cmp     r0, #0
+    ble     handler_exit
 
-blo     leave_func
+    mov     r0, r4
+    bl      handle_cmd
 
-cmp     r3, #0xf2
-beq     write_mem
+handler_exit:
+    pop.w   {r4,pc}
 
-cmp     r3, #0xf3
-beq     get_ver
+; #######################
+; # handle_cmd()
+; # input: r0 = ptr to hid buffer
+; #
+; # TODO: jmptables w/ keystone
+handle_cmd:
+    push.w  {r4,lr}
 
-; # sd_write uses both f5 and f6
-cmp     r3, #0xf5
-beq     sd_write
+    mov     r4, r0
 
-cmp     r3, #0xf8
-beq     exec
+    ldrh    r3, [r4]
+    cmp     r3, #0xf1
+    blo     exit_cmdhandler
+    bne     check_write
 
-b       leave_func
+    mov     r0, r4
+    bl      handle_readmem_cmd
+    b       exit_cmdhandler
 
-; #########A f3 #########
-get_ver:
-; # return version information
-; # init response buf
-mov     r2, #0x40
-add     r0, sp, #0x50
-mov     r1, #0
-bl      memset
+check_write:
+    cmp     r3, #0xf2
+    bne     check_getver
 
-; # return 0xf3, tracker version, custom firmware version
-mov     r3, #0xf3
-str     r3, [sp, #0x50]
-ldr     r5, =TRACKER_FIRMWARE_VERSION
-ldr     r6, =CUSTOM_FIRMWARE_VERSION
-strd    r5, r6, [sp, #0x54]
-add     r0, sp, #0x50
-mov     r1, #2000
-bl      usb_hid_write
-b       leave_func
+    mov     r0, r4
+    bl      handle_writemem_cmd
+    b       exit_cmdhandler
 
-; #########A f8 #########
-exec:
-; # init response buf
-mov     r2, #0x40
-add     r0, sp, #0x50
-mov     r1, #0
-bl      memset
+check_getver:
+    cmp     r3, #0xf3
+    bne     check_sdwrite
 
-; # r0 = hid_data
-; # r1 = response buf (0x40 bytes)
-; # set PC = [hid_data + 4]
-; # anything from hid_data + 8 can be
-; # considered as input arguments.
-; # response buf can be used for
-; # returning data to the client
-mov     r0, r4
-ldr     r5, [r4, #4]
-add     r1, sp, #0x50
-blx     r5
+    bl      handle_getver_cmd
+    b       exit_cmdhandler
 
-add     r0, sp, #0x50
-mov     r1, #2000
-bl      usb_hid_write
+check_sdwrite:
+    ; # handle_sdwrite_cmd uses both f5 and f6
+    cmp     r3, #0xf5
+    bne     check_exec
 
-b       leave_func
+    mov     r0, r4
+    bl      handle_sdwrite_cmd
+    b       exit_cmdhandler
+
+check_exec:
+    cmp     r3, #0xf8
+    bne     check_break
+
+    mov     r0, r4
+    bl      handle_exec_cmd
+    b       exit_cmdhandler
+
+check_break:
+    cmp     r3, #0xfa
+    bne     check_cont
+    mov     r0, r4
+    bl      handle_brk_cmd
+    b       exit_cmdhandler
+
+check_cont:
+    mov     r0, #0xfb
+    bl      send_response
+
+exit_cmdhandler:
+    pop.w   {r4,pc}
+
+
+; #######################
+; 
+handle_brk_cmd:
+    push.w  {r5-r6,lr}
+
+    mov     r4, r0
+
+    mov     r0, #0xfa
+    bl      send_response
+
+wait_client:
+    mov     r1, #2000
+    mov     r0, r4
+    bl      usb_hid_read
+
+    cmp     r0, #0
+    ble     wait_client
+
+    ldrh    r1, [r4]
+    cmp     r1, #0xfb
+    beq     ret_brk
+
+    cmp     r1, #0xfa
+    bne     do_handle
+    mov     r0, r1
+    bl      send_response
+    b       wait_client
+
+do_handle:
+    mov     r0, r4
+    bl      handle_cmd
+    b       wait_client
+
+ret_brk:
+    mov     r0, r1
+    bl      send_response
+
+    pop.w   {r5-r6,pc}
+
+; # TODO
+send_response:
+    push.w  {r5, lr}
+    sub     sp, sp, #0x50
+
+    mov     r5, r0
+
+    mov     r2, #0x40
+    mov     r0, sp
+    mov     r1, #0
+    bl      memset
+
+    str     r5, [sp]
+    mov     r0, sp
+    mov     r1, #2000
+    bl      usb_hid_write
+
+    add     sp, sp, #0x50
+    pop.w   {r5, pc}
+
+; ########## f3 #########
+handle_getver_cmd:
+    push.w  {r4-r6,lr}
+    sub     sp, sp, #0x50
+
+    ; # return version information
+    ; # init response buf
+    mov     r2, #0x40
+    mov     r0, sp
+    mov     r1, #0
+    bl      memset
+
+    ; # return 0xf3, tracker version, custom firmware version
+    mov     r3, #0xf3
+    str     r3, [sp]
+    ldr     r5, =TRACKER_FIRMWARE_VERSION
+    ldr     r6, =CUSTOM_FIRMWARE_VERSION
+    strd    r5, r6, [sp, #4]
+    mov     r0, sp
+    mov     r1, #2000
+    bl      usb_hid_write
+
+    add     sp, sp, #0x50
+    pop.w   {r4-r6,pc}
+
+; ########## f8 #########
+handle_exec_cmd:
+    push.w  {r4-r6,lr}
+    sub     sp, sp, #0x50
+
+    ; # HID input buf
+    mov     r4, r0
+
+    ; # init response buf
+    mov     r2, #0x40
+    mov     r0, sp
+    mov     r1, #0
+    bl      memset
+
+    ; # r0 = hid_data
+    ; # r1 = response buf (0x40 bytes)
+    ; # set PC = [hid_data + 4]
+    ; # anything from hid_data + 8 can be
+    ; # considered as input arguments.
+    ; # response buf can be used for
+    ; # returning data to the client
+    mov     r0, r4
+    ldr     r5, [r4, #4]
+    add     r1, sp
+    blx     r5
+
+    mov     r0, sp
+    mov     r1, #2000
+    bl      usb_hid_write
+
+    add     sp, sp, #0x50
+    pop.w   {r4-r6,pc}
 
 ; ######### f5 #########
-sd_write:
-; # init reponse buf
-mov     r2, #0x40
-add     r0, sp, #0x50
-mov     r1, #0
-bl      memset
+handle_sdwrite_cmd:
+    push.w  {r4-r6,lr}
+    sub     sp, sp, #0x160
 
-; # init fd struct
-mov     r2, #0x104
-add     r0, sp, #0x100
-mov     r1, #0
-bl      memset
+    mov     r4, r0
 
-; # create file
-mov     r2, #0xb
-add     r1, r4, #4
-add     r0, sp, #0x100
-bl      sd_create_file
-cmp     r0, #0
-beq     sd_err
+    ; # init reponse buf
+    mov     r2, #0x40
+    mov     r0, sp
+    mov     r1, #0
+    bl      memset
 
-; # get data
+    ; # init fd struct
+    mov     r2, #0x104
+    add     r0, sp, #0x50
+    mov     r1, #0
+    bl      memset
+
+    ; # create file
+    mov     r2, #0xb
+    add     r1, r4, #4
+    add     r0, sp, #0x50
+    bl      sd_create_file
+    cmp     r0, #0
+    beq     sd_err
+
+    ; # get data
 read_data:
-mov     r1, #2000
-mov     r0, r4
-bl      usb_hid_read
-cmp     r0, #0x40
-bne     sd_err
+    mov     r1, #2000
+    mov     r0, r4
+    bl      usb_hid_read
+    cmp     r0, #0x40
+    bne     sd_err
 
-; # client may have aborted
-ldrh    r5, [r4]
-cmp     r5, #0xf6
-bne     sd_err
+    ; # client may have aborted
+    ldrh    r5, [r4]
+    cmp     r5, #0xf6
+    bne     sd_err
 
-; # write data to file
-add     r0, sp, #0x100
-add     r1, r4, #0x4
-ldrh    r2, [r4, #0x2]
-mov     r6, r2
-bl      sd_write_file
-cmp     r0, #0
-ble     sd_err
+    ; # write data to file
+    add     r0, sp, #0x50
+    add     r1, r4, #0x4
+    ldrh    r2, [r4, #0x2]
+    mov     r6, r2
+    bl      sd_write_file
+    cmp     r0, #0
+    ble     sd_err
 
-; # return number of bytes written
-strd    r5, r6, [sp, #0x50]
-add     r0, sp, #0x50
-mov     r1, #2000
-bl      usb_hid_write
-b       read_data
+    ; # return number of bytes written
+    strd    r5, r6, [sp]
+    mov     r0, sp
+    mov     r1, #2000
+    bl      usb_hid_write
+    b       read_data
 
 sd_err:
-; # return 0xf6, 0 (error)
-mov     r5, #0xf6
-mov     r6, #0x00
-strd    r5, r6, [sp, #0x50]
-add     r0, sp, #0x50
-mov     r1, #2000
-bl      usb_hid_write
+    ; # return 0xf6, 0 (error)
+    mov     r5, #0xf6
+    mov     r6, #0x00
+    strd    r5, r6, [sp]
+    mov     r0, sp
+    mov     r1, #2000
+    bl      usb_hid_write
 
 sd_close:
-; # close file
-add     r0, sp, #0x100
-bl      sd_close_file
-b       leave_func
+    ; # close file
+    add     r0, sp, #0x50
+    bl      sd_close_file
+
+    add     sp, sp, #0x160
+    pop.w   {r4-r6,pc}
 
 ; ######### f2 #########
-write_mem:
-; # init response buf
-add     r0, sp, #0x50
-mov     r1, #0
-mov     r2, #0x40
-bl      memset
+handle_writemem_cmd:
+    push.w  {r4-r6,lr}
+    sub     sp, sp, #0x50
 
-; # set up memcpy() arguments
-; # r0 = dst: *(hid data + 4)
-; # r1 = src: (hid data + 0xc)
-; # r2 = n *(hid data + 8)
-ldr     r0, [r4, #4]
-add.w   r1, r4, #0xc
-ldr     r2, [r4, #8]
+    mov     r4, r0
 
-; # ensure that a maximum of 0x34 bytes
-; # are written to memory at a time
-mov     r5, #0
-cmp     r2, #0x34
-bhi     skip_write
+write_more:
+    ; # init response buf
+    mov     r0, sp
+    mov     r1, #0
+    mov     r2, #0x40
+    bl      memset
 
-mov     r5, r2
-cpsid   i
-bl      memcpy
-cpsie   i
+    ; # set up memcpy() arguments
+    ; # r0 = dst: *(hid data + 4)
+    ; # r1 = src: (hid data + 0xc)
+    ; # r2 = n *(hid data + 8)
+    ldr     r0, [r4, #4]
+    add.w   r1, r4, #0xc
+    ldr     r2, [r4, #8]
+
+    ; # copy a maximum number of
+    ; #0x3c bytes at a time
+    mov     r5, #0
+    cmp     r2, #0x34
+    bhi     skip_write
+
+    mov     r5, r2
+    cpsid   i
+    bl      memcpy
+    cpsie   i
 
 skip_write:
-str     r5, [sp, #0x50]
+    str     r5, [sp]
 
-; # send response
-add     r0, sp, #0x50
-mov     r1, #2000
-bl      usb_hid_write
+    ; # send response
+    mov     r0, sp
+    mov     r1, #2000
+    bl      usb_hid_write
 
-; # get next packet
-mov     r1, #2000
-mov     r0, r4
-bl      usb_hid_read
-cmp     r0, #0x40
-bne     leave_func
+    ; # get next packet
+    mov     r1, #2000
+    mov     r0, r4
+    bl      usb_hid_read
+    cmp     r0, #0x40
+    bne     ret_write
 
-; # go on until client aborts
-ldrh    r3, [r4]
-cmp     r3, #0xf2
-beq     write_mem
+    ; # go on until client aborts
+    ldrh    r3, [r4]
+    cmp     r3, #0xf2
+    beq     write_more
 
-b       leave_func
+ret_write:
+    add     sp, sp, #0x50
+    pop.w   {r4-r6,pc}
 
 ; ######### f1 #########
-read_mem:
-; # init response buf
-add     r0, sp, #0x50
-mov     r1, #0
-mov     r2, #0x40
-bl      memset
+handle_readmem_cmd:
+    push.w  {r4-r6,lr}
+    sub     sp, sp, #0x50
 
-; # set up memcpy() arguments
-; # r0 = dst: response buf + 4
-; # r1 = src: *(hid data + 4)
-; # r2 = n *(hid data + 8)
-add     r0, sp, #0x54
-ldr     r1, [r4, #0x4]
-ldr     r2, [r4, #8]
+    mov     r4, r0
 
-; # ensure that a maximum of 0x3c bytes
-; # are read from memory at a time
-mov     r5, #0
-cmp     r2, #0x3c
-bhi     skip_copy
+read_more:
+    ; # init response buf
+    mov     r0, sp
+    mov     r1, #0
+    mov     r2, #0x40
+    bl      memset
 
-mov     r5, r2
-cpsid   i
-bl      memcpy
-cpsie   i
+    ; # set up memcpy() arguments
+    ; # r0 = dst: response buf + 4
+    ; # r1 = src: *(hid data + 4)
+    ; # r2 = n *(hid data + 8)
+    add     r0, sp, #4
+    ldr     r1, [r4, #0x4]
+    ldr     r2, [r4, #8]
+
+    ; # copy a maximum number of
+    ; #0x3c bytes at a time
+    mov     r5, #0
+    cmp     r2, #0x3c
+    bhi     skip_copy
+
+    mov     r5, r2
+    cpsid   i
+    bl      memcpy
+    cpsie   i
 
 skip_copy:
-str     r5, [sp, #0x50]
+    str     r5, [sp]
 
-; # send response
-add     r0, sp, #0x50
-mov     r1, #2000
-bl      usb_hid_write
+    ; # send response
+    mov     r0, sp
+    mov     r1, #2000
+    bl      usb_hid_write
 
-; # get next packet
-mov     r1, #2000
-mov     r0, r4
-bl      usb_hid_read
-cmp     r0, #0x40
-bne     leave_func
+    ; # get next packet
+    mov     r1, #2000
+    mov     r0, r4
+    bl      usb_hid_read
+    cmp     r0, #0x40
+    bne     ret_read
 
-; # go on until client aborts
-ldrh    r3, [r4]
-cmp     r3, #0xf1
-beq     read_mem
+    ; # go on until client aborts
+    ldrh    r3, [r4]
+    cmp     r3, #0xf1
+    beq     read_more
 
-; ########################
-leave_func:
-add     sp, sp, #0x200
-pop.w   {r4-r8,pc}
+ret_read:
+    add     sp, sp, #0x50
+    pop.w   {r4-r6,pc}
 """
 
 def pack_version(major, minor, patch):
@@ -266,7 +411,7 @@ class Patch:
 
 fw_150_hid_patch = Patch(
     "Memory dumping/patching/code execution/file transfer via USB",
-    new_hid_handler,
+    handle_raw_hid,
     # hid handler file offset / address
     0x00002D44,
     # hid handler end address - hid handler start address
@@ -274,7 +419,7 @@ fw_150_hid_patch = Patch(
     # symbols
     symbols = {
         "TRACKER_FIRMWARE_VERSION": pack_version(1,5,0),
-        "CUSTOM_FIRMWARE_VERSION": pack_version(0,3,1),
+        "CUSTOM_FIRMWARE_VERSION": pack_version(0,3,3),
         "memcpy": 0x00003384,
         "memset": 0x000A709C,
         "usb_hid_read": 0x0005D04,

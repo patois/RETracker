@@ -9,8 +9,8 @@ SYMBOLS = {
     "pads_struct": 0x20005D48}
 
 DST_ADDR = 0x70100000
-imp_set_pad = """
-push    {lr}
+stub_set_pad = """
+push    {r4-r5,lr}
 mov     r4, r0
 ldr     r0, =pads_struct
 ldr     r1, [r4,#8]
@@ -18,7 +18,7 @@ ldr     r2, [r4,#0xc]
 ldrb.w  r3, [r4,#0x10]
 ldr     r5, =set_pad
 blx     r5
-pop     {pc}
+pop     {r4-r5,pc}
 """
 
 class PadsDemo(Polyp):
@@ -95,6 +95,7 @@ class PadsDemo(Polyp):
         self._fade_all()
         self._flash_all()
         self._all_pads_off()
+        return True
 
 def get_polyp(ti):
     trk_ver, fw_ver = ti.get_version()
@@ -108,7 +109,7 @@ def get_polyp(ti):
             ti,
             [Patch(
                 "Pads demo",
-                imp_set_pad,
+                stub_set_pad,
                 DST_ADDR,
                 symbols=SYMBOLS)]
         )

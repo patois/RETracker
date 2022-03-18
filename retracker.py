@@ -5,6 +5,17 @@ import tools.asm as asm
 from importlib import import_module
 from datetime import datetime
 
+
+# ------------------------------------------------------------------
+def brk(ti, args):
+    success = ti.brk()
+    print("brk!" if success else "Failed. Try again?")
+
+# ------------------------------------------------------------------
+def cont(ti, args):
+    success = ti.cont()
+    print("cont!" if success else "Failed. Try again?")
+
 # ------------------------------------------------------------------
 def dumphex(ti, args):
     addr = int(args.hexdump[0],16)
@@ -104,13 +115,20 @@ def assemble(ti, args):
 
         print("Running code...")
         args = args.polypargs
-        polyp.run(args)
-        print("Done")
+        success = polyp.run(args)
+        print("Done" if success else "Failure")
 
 # ------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser()
     x = parser.add_mutually_exclusive_group()
+
+    x.add_argument("-b",
+        action="store_true",
+        help="break")
+    x.add_argument("-c",
+        action="store_true",
+        help="continue")
     x.add_argument("-r", "--readmem",
         nargs=3,
         metavar=("ADDRESS", "SIZE", "FILE"),
@@ -118,7 +136,7 @@ def main():
     x.add_argument("-w", "--writemem",
         nargs=2,
         metavar=("ADDRESS", "DATA"),
-        help="Write hex-encoded string to memory ADDRESS. Example: %(prog)s -w 70100000 4141ACAB4141")
+        help="Write hex-encoded string to memory ADDRESS. Example: %(prog)s -w 70100000 \"41 EC FA414142c0\"")
     x.add_argument("-x", "--hexdump",
         nargs=2,
         metavar=("ADDRESS", "SIZE"),
@@ -170,7 +188,18 @@ def main():
         print("Version not supported. aborting")
         return
 
-    if args.hexdump:
+    # TODO
+    if args.b:
+        if not (patch_ver[1] >= 3 and patch_ver[2] >= 3):
+            print("Error: option requres new RETracker firmware")
+            return
+        brk(ti, args)
+    if args.c:
+        if not (patch_ver[1] >= 3 and patch_ver[2] >= 3):
+            print("Error: option requres new RETracker firmware")
+            return
+        cont(ti, args)
+    elif args.hexdump:
         dumphex(ti, args)
     elif args.disassemble:
         disassemble(ti, args)

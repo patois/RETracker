@@ -6,15 +6,15 @@ from hexdump import hexdump
 # routine will be written to
 DST_ADDR = 0x70100000
 
-imp_return_acab = """
+imp_return_val = """
 ; # r0 = ptr to hid input (0x40 bytes)
 ; #   can freely be used as input arguments
 ; # r1 = ptr to hid output (0x40 bytes)
 ; #   can freely be used for returning
 ; #   data to the client/caller
 
-mov     r2, #0xabac
-movt    r2, #0xacab
+mov     r2, #0xabcd
+movt    r2, #0x0ff0
 str     r2, [r1]
 bx      lr
 """
@@ -34,6 +34,7 @@ class ExamplePolyp(Polyp):
         # to be executed in thumb mode (clearing it, in ARM mode)
         data = self.ti.exec(DST_ADDR | 1)
         print("Data returned:\n%s" % hexdump(data))
+        return True
 
 def get_polyp(ti):
     """returns instance of memory.Polyp"""
@@ -49,7 +50,7 @@ def get_polyp(ti):
             ti,
             [Patch(
                 "Simple example",
-                imp_return_acab,
+                imp_return_val,
                 DST_ADDR)]
         )
         return polyp

@@ -14,6 +14,7 @@ The `RETracker` firmware's basic features comprise the following:
 * Writing/patching of memory
 * Execution of custom code/redirection of control flow
 * Writing files to the tracker's SD card
+* Captivate the Tracker's main() function in a loop, while other RETracker commands keep working ("break")
 
 These features are a solid base for adding further functions to the `Polyend Tracker` during run-time, by assembling position-independend code on the host, transferring it to the Tracker and having the new USB handler execute the freshly implanted code. There are a number of features available already that can be transferred dynamically to the device.
 Make sure to [check them out](polyp/) and/or add your own!
@@ -76,15 +77,18 @@ From there on, the `Polyend Tracker` can be communicated with by plugging it int
 The main workhorse of this project probably is `retracker.py`, which provides a command line interface to the user.
 ```
 # python retracker.py -h
-usage: retracker.py [-h] [-r ADDRESS SIZE FILE] [-w ADDRESS DATA] [-x ADDRESS SIZE] [-d ADDRESS SIZE] [-a POLYP]
-                    [--polypargs POLYPARGS [POLYPARGS ...]] [-e ADDRESS] [-t SRC_FILENAME DST_FILENAME]
+usage: retracker.py [-h] [-b] [-c] [-r ADDRESS SIZE FILE] [-w ADDRESS DATA] [-x ADDRESS SIZE] [-d ADDRESS SIZE]
+                    [-a POLYP] [--polypargs POLYPARGS [POLYPARGS ...]] [-e ADDRESS] [-t SRC_FILENAME DST_FILENAME]
 
 optional arguments:
   -h, --help            show this help message and exit
+  -b                    break
+  -c                    continue
   -r ADDRESS SIZE FILE, --readmem ADDRESS SIZE FILE
                         Save memory to local file. Example: retracker.py -r 70100000 4f0 dump.bin
   -w ADDRESS DATA, --writemem ADDRESS DATA
-                        Write memory. Example: retracker.py -w 70100000 4141ACAB4141
+                        Write hex-encoded string to memory ADDRESS. Example: retracker.py -w 70100000 "41 EC
+                        FA414142c0"
   -x ADDRESS SIZE, --hexdump ADDRESS SIZE
                         Create hex-dump of memory. Example: retracker.py -x 0 ffff
   -d ADDRESS SIZE, --disassemble ADDRESS SIZE

@@ -4,7 +4,7 @@ class Polyp:
         self.patches = patches
     
     def run(self):
-        pass
+        return False
 
     def get_patches(self):
         return self.patches
