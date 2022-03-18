@@ -1,4 +1,5 @@
 from http.client import NON_AUTHORITATIVE_INFORMATION
+from polyp.flashscreen import DST_ADDR_SET_BRIGHTNESS
 from tracker.firmware import Patch
 from tracker.memory import Polyp
 from hexdump import hexdump
@@ -7,11 +8,12 @@ from time import sleep
 
 SYMBOLS = {
     "set_pad":0x0002B99C+1,
-    "pads_struct": 0x20005D48}
+    "pads_struct": 0x20005D48,
+    "addr_screen_brightness":0x2000566a}
 
-DST_ADDR = 0x70100000
-imp_set_pad = """
-push    {lr}
+DST_ADDR_SET_PAD = 0x70100000
+stub_set_pad = """
+push    {r4-r5, lr}
 mov     r4, r0
 ldr     r0, =pads_struct
 ldr     r1, [r4,#8]
@@ -19,7 +21,7 @@ ldr     r2, [r4,#0xc]
 ldrb.w  r3, [r4,#0x10]
 ldr     r5, =set_pad
 blx     r5
-pop     {pc}
+pop     {r4-r5, pc}
 """
 
 font_20bit = {
@@ -51,6 +53,23 @@ font_20bit = {
     "Z": 0b11110001101100011110,
     " ": 0b00000000000000000000,
     "0": 0b01100110101101001100,
+    "1": 0b11100011000110001100,
+    "2": 0b11110001001000011110,
+    "3": 0b11110011100011011110,
+    "4": 0b10100101001111000100,
+    "5": 0b11110100000001011110,
+    "6": 0b11110100001011011110,
+    "7": 0b11100001000100010000,
+    "8": 0b11100101101101001110,
+    "9": 0b11110110100001011110,
+    "[": 0b11000100001000011000,
+    "]": 0b11000010000100011000,
+    "-": 0b00000000001111000000,
+    "*": 0b00000011000110000000,
+    "|": 0b01000010000100001000,
+    "+": 0b01100111101111001100,
+    "(": 0b01000100001000001000,
+    ")": 0b00100000100001000100,
     "!": 0b10101101010000010101,
     "?": 0b11100001000000001000,
     ".": 0b00000000000000010000
@@ -73,7 +92,7 @@ class Scroller(Polyp):
 
     def _set_pad(self, idx, state, brightness=0xa):
         if idx >= 0 and idx < NUM_PADS_TOTAL:
-            self.ti.exec(DST_ADDR | 1, struct.pack("<IIH", idx, 1 if state else 0, brightness))
+            self.ti.exec(DST_ADDR_SET_PAD | 1, struct.pack("<IIH", idx, 1 if state else 0, brightness))
 
     def _set_pixel(self, idx, state):
         self.frame[idx] = state
@@ -140,25 +159,24 @@ class Scroller(Polyp):
             while True:
                 self._scroll(text)
         except:
-            self._clear_frame()
-            self._draw_frame()
             self._print("OK", 1)
         return True
 
 def get_polyp(ti):
     trk_ver, fw_ver = ti.get_version()
-    # require tracker firmware v1.5.0, patch v0.3
+    # require tracker firmware v1.5.0, RETracker patch v0.3.3
     if (trk_ver[0] == 1 and
         trk_ver[1] == 5 and
         trk_ver[2] == 0 and
-        fw_ver[1] >= 3):
+        fw_ver[1] >= 3 and
+        fw_ver[2] >= 3):
 
         polyp = Scroller(
             ti,
             [Patch(
                 "Text scroller on the Tracker's pads",
-                imp_set_pad,
-                DST_ADDR,
+                stub_set_pad,
+                DST_ADDR_SET_PAD,
                 symbols=SYMBOLS)]
         )
         return polyp

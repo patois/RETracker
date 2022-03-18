@@ -303,8 +303,8 @@ write_more:
     add.w   r1, r4, #0xc
     ldr     r2, [r4, #8]
 
-    ; # copy a maximum of 0x34 bytes
-    ; # at a time
+    ; # copy a maximum number of
+    ; #0x3c bytes at a time
     mov     r5, #0
     cmp     r2, #0x34
     bhi     skip_write
@@ -360,8 +360,8 @@ read_more:
     ldr     r1, [r4, #0x4]
     ldr     r2, [r4, #8]
 
-    ; # copy a maximum of 0x3c bytes
-    ; # at a time
+    ; # copy a maximum number of
+    ; #0x3c bytes at a time
     mov     r5, #0
     cmp     r2, #0x3c
     bhi     skip_copy
