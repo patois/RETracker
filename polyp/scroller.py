@@ -79,6 +79,7 @@ class Scroller(Polyp):
         self.frame[idx] = state
 
     def _draw_frame(self):
+        self.ti.brk()
         for i in range(12):
             self._set_pad(
                 i,
@@ -92,6 +93,7 @@ class Scroller(Polyp):
             self._set_pad(
                 i + NUM_PADS_PER_ROW * 3,
                 self.frame[i+NUM_PADS_PER_ROW*3])
+        self.ti.cont()
 
     def _draw_char(self, c, x_coord, neg=False):
         shift_mask = 0b10000

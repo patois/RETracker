@@ -12,6 +12,11 @@ def brk(ti, args):
     print("brk!" if success else "Failed. Try again?")
 
 # ------------------------------------------------------------------
+def cont(ti, args):
+    success = ti.cont()
+    print("cont!" if success else "Failed. Try again?")
+
+# ------------------------------------------------------------------
 def dumphex(ti, args):
     addr = int(args.hexdump[0],16)
     size = int(args.hexdump[1],16)
@@ -120,7 +125,10 @@ def main():
 
     x.add_argument("-b",
         action="store_true",
-        help="hijack Tracker's main() until another '-b' command is sent. Other commands keep working")
+        help="break")
+    x.add_argument("-c",
+        action="store_true",
+        help="continue")
     x.add_argument("-r", "--readmem",
         nargs=3,
         metavar=("ADDRESS", "SIZE", "FILE"),
@@ -186,6 +194,11 @@ def main():
             print("Error: option requres new RETracker firmware")
             return
         brk(ti, args)
+    if args.c:
+        if not (patch_ver[1] >= 3 and patch_ver[2] >= 3):
+            print("Error: option requres new RETracker firmware")
+            return
+        cont(ti, args)
     elif args.hexdump:
         dumphex(ti, args)
     elif args.disassemble:

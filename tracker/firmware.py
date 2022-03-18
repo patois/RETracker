@@ -77,11 +77,15 @@ check_exec:
     b       exit_cmdhandler
 
 check_break:
-    cmp     r3, #0xf7
-    bne     exit_cmdhandler
-
+    cmp     r3, #0xfa
+    bne     check_cont
     mov     r0, r4
     bl      handle_brk_cmd
+    b       exit_cmdhandler
+
+check_cont:
+    mov     r0, #0xfb
+    bl      send_response
 
 exit_cmdhandler:
     pop.w   {r4,pc}
@@ -91,21 +95,11 @@ exit_cmdhandler:
 ; 
 handle_brk_cmd:
     push.w  {r5-r6,lr}
-    sub     sp, sp, #0x50
 
     mov     r4, r0
 
-    ; # init response buf
-    mov     r2, #0x40
-    mov     r0, sp
-    mov     r1, #0
-    bl      memset
-
-    ldrh    r5, [r4]
-    str     r5, [sp]
-    mov     r0, sp
-    mov     r1, #2000
-    bl      usb_hid_write
+    mov     r0, #0xfa
+    bl      send_response
 
 wait_client:
     mov     r1, #2000
@@ -113,36 +107,48 @@ wait_client:
     bl      usb_hid_read
 
     cmp     r0, #0
-    ble     wait_client 
+    ble     wait_client
 
     ldrh    r1, [r4]
-    cmp     r1, #0xf7
+    cmp     r1, #0xfb
     beq     ret_brk
 
+    cmp     r1, #0xfa
+    bne     do_handle
+    mov     r0, r1
+    bl      send_response
+    b       wait_client
+
+do_handle:
     mov     r0, r4
     bl      handle_cmd
     b       wait_client
 
 ret_brk:
+    mov     r0, r1
+    bl      send_response
 
+    pop.w   {r5-r6,pc}
 
-    ; # TODO, create subroutine
+; # TODO
+send_response:
+    push.w  {r5, lr}
+    sub     sp, sp, #0x50
+
+    mov     r5, r0
+
     mov     r2, #0x40
     mov     r0, sp
     mov     r1, #0
     bl      memset
 
-    ldrh    r5, [r4]
     str     r5, [sp]
     mov     r0, sp
     mov     r1, #2000
     bl      usb_hid_write
 
-
-
-
     add     sp, sp, #0x50
-    pop.w   {r5-r6,pc}
+    pop.w   {r5, pc}
 
 ; ########## f3 #########
 handle_getver_cmd:

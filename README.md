@@ -77,12 +77,13 @@ From there on, the `Polyend Tracker` can be communicated with by plugging it int
 The main workhorse of this project probably is `retracker.py`, which provides a command line interface to the user.
 ```
 # python retracker.py -h
-usage: retracker.py [-h] [-b] [-r ADDRESS SIZE FILE] [-w ADDRESS DATA] [-x ADDRESS SIZE] [-d ADDRESS SIZE] [-a POLYP]
-                    [--polypargs POLYPARGS [POLYPARGS ...]] [-e ADDRESS] [-t SRC_FILENAME DST_FILENAME]
+usage: retracker.py [-h] [-b] [-c] [-r ADDRESS SIZE FILE] [-w ADDRESS DATA] [-x ADDRESS SIZE] [-d ADDRESS SIZE]
+                    [-a POLYP] [--polypargs POLYPARGS [POLYPARGS ...]] [-e ADDRESS] [-t SRC_FILENAME DST_FILENAME]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -b                    hijack Tracker's main() until another '-b' command is sent. Other commands keep working
+  -b                    break
+  -c                    continue
   -r ADDRESS SIZE FILE, --readmem ADDRESS SIZE FILE
                         Save memory to local file. Example: retracker.py -r 70100000 4f0 dump.bin
   -w ADDRESS DATA, --writemem ADDRESS DATA
