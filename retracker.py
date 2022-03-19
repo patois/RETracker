@@ -20,7 +20,7 @@ def cont(ti, args):
 def dumphex(ti, args):
     addr = int(args.hexdump[0],16)
     size = int(args.hexdump[1],16)
-    print("Dumping %08X-%08X\n" % (addr, addr+size))
+    print("Dumping %08x-%08x\n" % (addr, addr+size))
     data = ti.read_mem(addr, size)
     if data:
         print(hexdump.hexdump(data, addr))
@@ -33,7 +33,7 @@ def disassemble(ti, args):
     addr = addr_and_mode & (~1)
     mode = addr_and_mode & 1
     size = int(args.disassemble[1],16)
-    print("Disassembling %08X-%08X in %s mode\n" % (addr, addr+size, "Thumb" if mode else "ARM"))
+    print("Disassembling %08x-%08x in %s mode\n" % (addr, addr+size, "Thumb" if mode else "ARM"))
     code = ti.read_mem(addr, size)
     if code:
         d = asm.Disassembler()
@@ -52,7 +52,7 @@ def readmem(ti, args):
     except:
         print("Error creating output file. Aborting")
         return
-    print("Dumping %08X-%08X\n" % (addr, addr+size))
+    print("Dumping %08x-%08x\n" % (addr, addr+size))
     data = ti.read_mem(addr, size)
     if data:
         f.write(data)
@@ -104,7 +104,7 @@ def assemble(ti, args):
                 symbols=patch.symbols,
                 thumb=patch.thumbmode)
             print("Description: \"%s\"" % patch.description)
-            print("Target address: %08X" % patch.entry)
+            print("Target address: %08x" % patch.entry)
             print("Mode: %s" % ("thumb" if patch.thumbmode else "arm"))
             if not a.assemble():
                 print("Failed! Aborting...")
@@ -120,7 +120,19 @@ def assemble(ti, args):
 
 # ------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser()
+    epilog = """Examples:
+Dump memory to file:        %(prog)s -r 70100000 4f0 dump.bin
+Write data to memory:       %(prog)s -w 70100000 \"41 EC FA414142c0\"
+Hex-dump:                   %(prog)s -x 0 ffff
+Disassemble:                %(prog)s -d 3c01 c000
+Assemble and run Polyp:     %(prog)s -a polyp.scroller --polypargs \"hi there!\"
+Run code in Thumb mode:     %(prog)s -e 70100001
+Run code in ARM mode:       %(prog)s -e 70100000
+Transfer file to Tracker:   %(prog)s -t PolyendTracker_1.5.0.ptf Firmware/PolyendTracker_cstm.ptf
+"""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=epilog)
     x = parser.add_mutually_exclusive_group()
 
     x.add_argument("-b",
@@ -132,34 +144,34 @@ def main():
     x.add_argument("-r", "--readmem",
         nargs=3,
         metavar=("ADDRESS", "SIZE", "FILE"),
-        help="Save memory to local file. Example: %(prog)s -r 70100000 4f0 dump.bin")
+        help="Save memory to local file")
     x.add_argument("-w", "--writemem",
         nargs=2,
         metavar=("ADDRESS", "DATA"),
-        help="Write hex-encoded string to memory ADDRESS. Example: %(prog)s -w 70100000 \"41 EC FA414142c0\"")
+        help="Write hex-encoded data to memory ADDRESS")
     x.add_argument("-x", "--hexdump",
         nargs=2,
         metavar=("ADDRESS", "SIZE"),
-        help="Create hex-dump of memory. Example: %(prog)s -x 0 ffff")
+        help="Create hex-dump of memory")
     x.add_argument("-d", "--disassemble",
         nargs=2,
         metavar=("ADDRESS", "SIZE"),
-        help="Disassemble code at ADDRESS (ARM/Thumb aware). Example: %(prog)s -d 3c01 c000")
+        help="Disassemble code at ADDRESS (ARM/Thumb aware)")
     x.add_argument("-a", "--assemble",
         nargs=1,
         metavar=("POLYP"),
-        help="Assemble and execute POLYP patchfile Example: %(prog)s -a polyp.scroller --polypargs \"hi there!\"")
+        help="Assemble and execute POLYP patchfile")
     parser.add_argument("--polypargs",
         nargs="+",
         help="Optional arguments that can be passed to a POLYP")
     x.add_argument("-e", "--exec",
         nargs=1,
         metavar=("ADDRESS"),
-        help="Execute code at ADDRESS (ARM/Thumb aware). Example: %(prog)s -e 70100001")
+        help="Execute code at ADDRESS (ARM/Thumb aware)")
     x.add_argument("-t", "--transfer",
         nargs=2,
         metavar=("SRC_FILENAME", "DST_FILENAME"),
-        help="Transfer SRC_FILENAME to Tracker's DST_FILENAME. Example: %(prog)s -t PolyendTracker_1.5.0.ptf Firmware/PolyendTracker_cstm.ptf")
+        help="Transfer SRC_FILENAME to Tracker's DST_FILENAME")
     args = parser.parse_args()
 
     ti = tracker.Tracker()
