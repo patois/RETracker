@@ -71,7 +71,7 @@ You're welcome! :D
 >ACHTUNG!!!
 >
 >It is expected for the UI to behave differently when flashing a patched firmware.
-This is probably due to differences in the IntelHex format that `RETracker` creates, which hasn't been looked into, yet (simply because it still leads to a successfully flashed firmware).
+This is probably due to differences in the IntelHex format that `fwtool.py` creates, which hasn't been looked into, yet (simply because it still leads to a successfully flashed firmware).
 >
 >Please patiently wait for the update to finish until the device reboots.
 In case something still went wrong, please consult the `Polyend Tracker` user manual, which explains the steps on how to enter the `emergency update procedure`.
@@ -211,11 +211,16 @@ Please have a look at the available modules in the [polyp/](polyp/) folder, whic
 ## Reverse Engineering the Tracker
 The `Polyend Tracker` is believed to be based on a µc similar to the Teensy 3.6 of which [data sheets and other tech info is available here](https://www.pjrc.com/store/teensy36.html).
 Be sure to check out the [MK66FX](https://www.pjrc.com/teensy/K66P144M180SF5RMV2.pdf) manual for a memory map in order to avoid running into device crashes when dumping memory.
+
 The `Tracker` firmware image is in IntelHex format and can be unpacked using [fwtool.py](fwtool.py) or loaded directly by disassemblers supporting the IntelHex format, such as [IDA Pro disassembler](https://hex-rays.com/ida-pro/ida-disassembler/) and probably others such as [GHIDRA](https://ghidra-sre.org/) or [Binary Ninja](https://binary.ninja/).
 The processor module to choose is ARM / little-endian.
 The firmware should be loaded at address 0. Address/offset 4 is the the reset vector with a pointer to the reset vector handler (start disassembling there).
 Most, if not all of its code runs in Thumb mode.
 I've found address `0x70100000` and above to be a reliable address to plant a `Polyp` into and run its code from there.
+
+If you'd like to give firmware development a go, grab a copy of both [Arduino and the Teensyduino addon](https://www.pjrc.com/teensy/td_download.html), buld some of the examples and flash the resulting `.hex` files onto the Tracker (be sure to pick `Teensy 3.6` and rename the resulting `.hex` file into something like `PolyendTracker_teensy.ptf`).
+
+![Teensyduino screenshot](rsrc/teensyduino.jpg)
 
 ## RETracker Wiki
 The RETracker wiki can be found [here](https://github.com/patois/RETracker/wiki).
