@@ -9,7 +9,7 @@ The `RETracker's` custom USB handler introduces new, non-official features to th
 
 ![RETracker screenshot](rsrc/retracker.png)
 
-The `RETracker` firmware's basic features comprise the following:
+Once patched, the firmware's new features comprise the following:
 * Reading/dumping of memory
 * Writing/patching of memory
 * Execution of custom code/redirection of control flow
@@ -19,7 +19,7 @@ These features are a solid base for adding further functions dynamically to the 
 
 Adding to that, the memory reading/writing functions allow the USB host to inspect the `Tracker's` memory by creating hex-dumps or by disassembling code in ARM or Thumb mode.
 
-Finally, the file transfer function (currently the only direction implemented is *from* the USB host *to* the `Tracker's` SD card) allows new firmware files or `NES` roms to be copied to the Tracker, without having to go through the intended process of swapping the SD card between the `Tracker` and a computer.
+Finally, the new file transfer function allows new firmware files or `NES` roms to be copied to the Tracker, without having to go through the intended process of swapping the SD card between the `Tracker` and a computer. Currently the only direction supported is *from* the USB host *to* the `Tracker's` SD card, hoever.
 
 HAPPY HACKING!
 ## Installation
@@ -212,13 +212,13 @@ Please have a look at the available modules in the [polyp/](polyp/) folder, whic
 The `Polyend Tracker` is believed to be based on a µc similar to the Teensy 3.6 of which [data sheets and other tech info is available here](https://www.pjrc.com/store/teensy36.html).
 Be sure to check out the [MK66FX](https://www.pjrc.com/teensy/K66P144M180SF5RMV2.pdf) manual for a memory map in order to avoid running into device crashes when dumping memory.
 
-The `Tracker` firmware image is in IntelHex format and can be unpacked using [fwtool.py](fwtool.py) or loaded directly by disassemblers supporting the IntelHex format, such as [IDA Pro disassembler](https://hex-rays.com/ida-pro/ida-disassembler/) and probably others such as [GHIDRA](https://ghidra-sre.org/) or [Binary Ninja](https://binary.ninja/).
+The `Tracker` firmware image is in IntelHex format and can be unpacked using [fwtool.py](fwtool.py) or loaded directly by disassemblers supporting the IntelHex format, such as the [IDA Pro disassembler](https://hex-rays.com/ida-pro/ida-disassembler/) and probably others such as [GHIDRA](https://ghidra-sre.org/) or [Binary Ninja](https://binary.ninja/).
 The processor module to choose is ARM / little-endian.
 The firmware should be loaded at address 0. Address/offset 4 is the the reset vector with a pointer to the reset vector handler (start disassembling there).
 Most, if not all of its code runs in Thumb mode.
 I've found address `0x70100000` and above to be a reliable address to plant a `Polyp` into and run its code from there.
 
-If you'd like to give firmware development a go, grab a copy of both [Arduino and the Teensyduino addon](https://www.pjrc.com/teensy/td_download.html), buld some of the examples and flash the resulting `.hex` files onto the Tracker (be sure to pick `Teensy 3.6` and rename the resulting `.hex` file into something like `PolyendTracker_teensy.ptf`).
+If you'd like to give firmware development a go, grab a copy of both [Arduino and the Teensyduino addon](https://www.pjrc.com/teensy/td_download.html), build some of the examples and flash the resulting `.hex` files onto the Tracker (be sure to pick `Teensy 3.6` and rename the resulting `.hex` file into something like `PolyendTracker_teensy.ptf`).
 
 ![Teensyduino screenshot](rsrc/teensyduino.jpg)
 
