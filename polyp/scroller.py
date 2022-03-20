@@ -1,8 +1,5 @@
-from http.client import NON_AUTHORITATIVE_INFORMATION
-from polyp.flashscreen import DST_ADDR_SET_BRIGHTNESS
 from tracker.firmware import Patch
 from tracker.memory import Polyp
-from hexdump import hexdump
 import struct
 from time import sleep
 
@@ -77,7 +74,7 @@ font_20bit = {
 
 NUM_PAD_ROWS = 4
 NUM_PADS_PER_ROW = 12
-NUM_PADS_TOTAL = NUM_PAD_ROWS * NON_AUTHORITATIVE_INFORMATION
+NUM_PADS_TOTAL = NUM_PAD_ROWS * NUM_PADS_PER_ROW
 CHAR_WIDTH = 5
 CHAR_DISTANCE = CHAR_WIDTH + 1
 

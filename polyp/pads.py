@@ -1,6 +1,5 @@
 from tracker.firmware import Patch
 from tracker.memory import Polyp
-from hexdump import hexdump
 import struct
 from time import sleep
 
