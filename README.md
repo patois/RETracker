@@ -2,7 +2,7 @@
 
 `RETracker` is a reverse engineering framework for the [Polyend Tracker](https://polyend.com/tracker/) written in Python.
 It is based on unofficial patches that are applied to the vendor's stock firmware.
-These patches introduce a custom USB handler by replacing the Tracker's existing USB RAWHID handler. 
+These patches introduce a custom USB handler by replacing the Tracker's existing but unused USB RAWHID handler. 
 
 The `RETracker's` custom USB handler introduces new, non-official features to the `Polyend Tracker` that can be controlled from a computer via USB and also brings back file transfer functionality that has been [disabled by Polyend with the introduction of firmware v1.4.0](https://github.com/polyend/TrackerBetaTesting/releases/tag/1.4.0).
 
@@ -19,7 +19,7 @@ These features are a solid base for adding further functions dynamically to the 
 
 Adding to that, the memory reading/writing functions allow the USB host to inspect the `Tracker's` memory by creating hex-dumps or by disassembling code in ARM or Thumb mode.
 
-Finally, the new file transfer function allows new firmware files or `NES` roms to be copied to the Tracker, without having to go through the intended process of swapping the SD card between the `Tracker` and a computer. Currently the only direction supported is *from* the USB host *to* the `Tracker's` SD card, hoever.
+Finally, the new file transfer function allows arbitrary files, such as firmware updates or `NES` roms to be copied to the Tracker, without having to go through the intended process of swapping the SD card between the `Tracker` and a computer. Currently the only direction supported is *from* the USB host *to* the `Tracker's` SD card, however.
 
 HAPPY HACKING!
 ## Installation
@@ -56,6 +56,7 @@ Creating output file: ..\PolyendTracker_1.5.0_retracker.ptf
 Done
 ```
 Once a firmware is successfully built, it should be copied to the Tracker's `"/firmware/"` folder on the root of its SD card.
+The firmware image's file name must start with `PolyendTracker_` and end with `.ptf` or otherwise, the Tracker won't find it.
 The firmware flashing procedure is straight forward and doesn't differ from the ordinary process.
 
 On the device
@@ -63,10 +64,6 @@ On the device
 * go to the `Firmware` menu
 * enter the `Firmware update` sub menu
 * choose the firmware you would like to flash onto the `Polyend Tracker`
-
-If the newly created firmware does not show up on the device, there may be a naming scheme for the firmware that must be followed (must start with `PolyendTracker_` and end with `.ptf`?).
-If that is the case, renaming the file on your computer may help.
-You're welcome! :D
 
 >ACHTUNG!!!
 >
@@ -179,7 +176,7 @@ Dumping 0002B99D-0002BA9D
 Whereas some of the more common command line options allow memory to be written, read and hex-dumped, the more exciting features are probably the `-e` and `-a` options.
 They allow code to be executed on the device.
 
-The `-e` option allows existing firmware code to be branched to directly, just as well as custom code after writing it to the device's memory using the `-w` option.
+The `-e` option allows existing firmware code to be branched to directly, or custom code after writing it to the device's memory using the `-w` option.
 The lowest bit of an `address` argument passed to the `retracker.py` command line utility specifies whether or not to use Thumb mode (0: ARM mode, 1: Thumb mode).
 
 The `-a` command line argument accepts so called `Polyps`, which are Python modules containing patches for the `Polyend Tracker` in the form of assembly routines and version-specific offsets and data.
@@ -219,6 +216,7 @@ Most, if not all of its code runs in Thumb mode.
 I've found address `0x70100000` and above to be a reliable address to plant a `Polyp` into and run its code from there.
 
 If you'd like to give firmware development a go, grab a copy of both [Arduino and the Teensyduino addon](https://www.pjrc.com/teensy/td_download.html), build some of the examples and flash the resulting `.hex` files onto the Tracker (be sure to pick `Teensy 3.6` and rename the resulting `.hex` file into something like `PolyendTracker_teensy.ptf`).
+Going back to an original `Polyend Tracker` firmware will be possible anytime using the Tracker's emergency update procedure, since it resides on a separate chip that isn't affected/overwritten by firmware updates.
 
 ![Teensyduino screenshot](rsrc/teensyduino.jpg)
 
