@@ -1,4 +1,4 @@
-from tracker.firmware import Patch
+from tracker.firmware import Patch, PatchLoc
 from tracker.memory import Polyp
 import struct
 
@@ -54,18 +54,22 @@ def get_polyp(ti):
             ti,
             [Patch(
                 "Set screen brightness",
-                imp_set_brightness,
-                DST_ADDR_SET_BRIGHTNESS,
-                max_size=0,
-                symbols=SYMBOLS,
-                thumbmode=True),
+                PatchLoc(
+                    imp_set_brightness,
+                    DST_ADDR_SET_BRIGHTNESS,
+                    max_size=0,
+                    symbols=SYMBOLS,
+                    thumbmode=True)
+            ),
             Patch(
                 "Get screen brightness",
-                imp_get_brightness,
-                DST_ADDR_GET_BRIGHTNESS,
-                max_size=0,
-                symbols=SYMBOLS,
-                thumbmode=True)]
+                PatchLoc(
+                    imp_get_brightness,
+                    DST_ADDR_GET_BRIGHTNESS,
+                    max_size=0,
+                    symbols=SYMBOLS,
+                    thumbmode=True)
+            )]
         )
         return polyp
     return None

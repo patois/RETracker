@@ -90,7 +90,7 @@ def assemble(ti, args):
         mod = import_module(args.assemble[0])
         polyp = mod.get_polyp(ti)
         if not polyp:
-            print("Current firmware not supported. Aborting")
+            print("Current firmware not supported. Aborting.")
             return
 
         patches = polyp.get_patches()
@@ -98,21 +98,21 @@ def assemble(ti, args):
         for patch in patches:
             i += 1
             print("Assembling patch #%d" % i)
-            a = asm.Assembler(
-                patch.entry,
-                patch.code,
-                symbols=patch.symbols,
-                thumb=patch.thumbmode)
-            print("Description: \"%s\"" % patch.description)
-            print("Target address: %08x" % patch.entry)
-            print("Mode: %s" % ("thumb" if patch.thumbmode else "arm"))
-            if not a.assemble():
-                print("Failed! Aborting...")
-                return
-            data = a.get_as_hex_string()          
-            print("Patching memory")
-            ti.write_mem(patch.entry, bytes.fromhex(data))
-
+            for patch_loc in patch.PatchLocs:
+                a = asm.Assembler(
+                    patch_loc.entry,
+                    patch_loc.code,
+                    symbols=patch_loc.symbols,
+                    thumb=patch_loc.thumbmode)
+                print("Description: \"%s\"" % patch.description)
+                print("Target address: %08X" % patch_loc.entry)
+                print("Mode: %s" % ("thumb" if patch_loc.thumbmode else "arm"))
+                if not a.assemble():
+                    print("Failed! Aborting...")
+                    return
+                data = a.get_as_hex_string()          
+                print("Patching memory")
+                ti.write_mem(patch_loc.entry, bytes.fromhex(data))
         print("Running code...")
         args = args.polypargs
         success = polyp.run(args)

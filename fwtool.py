@@ -42,32 +42,44 @@ def build(infile, outfile):
         return
     count = len(patches)
     print("Found %d patch%s" % (count, "es" if count > 1 else ""))
+
+    if not count:
+        print("No patch available. Aborting.")
+        return
+
+    print("Decoding input file")
+    fw = IntelHex(infile)
+
     n = 0
     for patch in patches:
+        code_snippets = []
         n += 1
-        print("Assembling patch #%d\nDescription: \"%s\"" % (n, patch.description))
-        a = asm.Assembler(
-                patch.entry,
-                patch.code,
-                symbols=patch.symbols,
-                max_size=patch.max_size,
-                thumb=patch.thumbmode)
-        success = a.assemble()
-        if not success:
-            print("Error: could not assemble patch")
-            return
+        print("\nPatch #%d\nDescription: \"%s\"" % (n, patch.description))
+        apply_patch = input("Would you like to apply this patch (y/n)? ")
+        if apply_patch.upper() != "Y":
+            print("Skipping patch #%d" % n)
+            continue
+        for loc in patch.PatchLocs:
+            a = asm.Assembler(
+                    loc.entry,
+                    loc.code,
+                    symbols=loc.symbols,
+                    max_size=loc.max_size,
+                    thumb=loc.thumbmode)
+            success = a.assemble()
+            if not success:
+                print("Error: could not assemble patch. Aborting.")
+                return
 
-        patches = {
-            a.get_entry():a.get_as_hex_string()
-        }
-        print("Decoding input file")
-        fw = IntelHex(infile)
-        print("Applying patch")
-        for k,v in patches.items():
-            fw.puts(k, bytes.fromhex(v))
-        print("Creating output file: %s" % outfile)
-        fw.write_hex_file(outfile, write_start_addr=False)
-        print("Done")
+            code_snippets.append(a)
+
+        print("Applying patch #%d" % n)
+        for cs in code_snippets:
+            fw.puts(cs.get_entry(), bytes.fromhex(cs.get_as_hex_string()))
+
+    print("Creating output file: %s" % outfile)
+    fw.write_hex_file(outfile, write_start_addr=False)
+    print("Done")
     return
 
 def main():

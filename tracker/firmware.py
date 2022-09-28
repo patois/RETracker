@@ -396,12 +396,13 @@ ret_read:
     pop.w   {r4-r6,pc}
 """
 
+alt_color_scheme = "cmp r1, #0"
+
 def pack_version(major, minor, patch):
     return ((major & 0xff) << 16) | ((minor & 0xff) << 8) | (patch & 0xff)
 
-class Patch:
-    def __init__(self, description, code, entry, max_size=0, symbols=None, thumbmode=True):
-        self.description = description
+class PatchLoc:
+    def __init__(self, code, entry, max_size=0, symbols=None, thumbmode=True):
         self.code = code
         # file offset of where to apply patch
         self.entry = entry
@@ -409,30 +410,49 @@ class Patch:
         self.symbols = symbols
         self.thumbmode = thumbmode
 
+class Patch:
+    def __init__(self, description, PatchLocs):
+        self.description = description
+        self.PatchLocs = PatchLocs if isinstance(PatchLocs, list) else [PatchLocs]
+
 fw_150_hid_patch = Patch(
     "Memory dumping/patching/code execution/file transfer via USB",
-    handle_raw_hid,
-    # hid handler file offset / address
-    0x00002D44,
-    # hid handler end address - hid handler start address
-    max_size = 0x000031EC - 0x00002D44,
-    # symbols
-    symbols = {
-        "TRACKER_FIRMWARE_VERSION": pack_version(1,5,0),
-        "CUSTOM_FIRMWARE_VERSION": pack_version(0,3,3),
-        "memcpy": 0x00003384,
-        "memset": 0x000A709C,
-        "usb_hid_read": 0x0005D04,
-        "usb_hid_write": 0x00005D78,
-        "sd_create_file": 0x00019F70,
-        "sd_write_file": 0x0001A038,
-        "sd_close_file": 0x00019EEC
-    },
-    thumbmode = True
+    PatchLoc(
+        handle_raw_hid,
+        # hid handler file offset / address
+        0x00002D44,
+        # hid handler end address - hid handler start address
+        max_size = 0x000031EC - 0x00002D44,
+        # symbols
+        symbols = {
+            "TRACKER_FIRMWARE_VERSION": pack_version(1,5,0),
+            "CUSTOM_FIRMWARE_VERSION": pack_version(0,3,3),
+            "memcpy": 0x00003384,
+            "memset": 0x000A709C,
+            "usb_hid_read": 0x0005D04,
+            "usb_hid_write": 0x00005D78,
+            "sd_create_file": 0x00019F70,
+            "sd_write_file": 0x0001A038,
+            "sd_close_file": 0x00019EEC
+        },
+        thumbmode = True
+    )
+)
+fw_150_alt_color_patch = Patch(
+    "Alternative color scheme",
+    PatchLoc(
+        alt_color_scheme,
+        # file offset / address to patch
+        0x00001f376,
+        max_size = 2,
+        # symbols
+        symbols = {},
+        thumbmode = True
+    )
 )
 
 FIRMWARE_PATCHES = {
-    "ce894299bc35996186528364951c901e": [fw_150_hid_patch]
+    "ce894299bc35996186528364951c901e": [fw_150_hid_patch, fw_150_alt_color_patch]
 }
 
 def get_patches(md5digest):

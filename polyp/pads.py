@@ -1,4 +1,4 @@
-from tracker.firmware import Patch
+from tracker.firmware import Patch, PatchLoc
 from tracker.memory import Polyp
 import struct
 from time import sleep
@@ -108,9 +108,11 @@ def get_polyp(ti):
             ti,
             [Patch(
                 "Pads demo",
-                stub_set_pad,
-                DST_ADDR,
-                symbols=SYMBOLS)]
+                PatchLoc(
+                    stub_set_pad,
+                    DST_ADDR,
+                    symbols=SYMBOLS)
+            )]
         )
         return polyp
     return None

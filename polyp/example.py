@@ -1,4 +1,4 @@
-from tracker.firmware import Patch
+from tracker.firmware import Patch, PatchLoc
 from tracker.memory import Polyp
 from hexdump import hexdump
 
@@ -48,10 +48,8 @@ def get_polyp(ti):
 
         polyp = ExamplePolyp(
             ti,
-            [Patch(
-                "Simple example",
-                imp_return_val,
-                DST_ADDR)]
+            [Patch("Simple example",
+                PatchLoc(imp_return_val, DST_ADDR))]
         )
         return polyp
     return None
