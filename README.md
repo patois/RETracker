@@ -6,7 +6,7 @@ These patches introduce a custom USB handler by replacing the Tracker's existing
 
 [Watch a video of a text scroller on the Tracker's pads](https://vimeo.com/688140736)
 
-The `RETracker's` custom USB handler introduces new, non-official features to the `Polyend Tracker` that can be controlled from a computer via USB and also brings back file transfer functionality that has been [disabled by Polyend with the introduction of firmware v1.4.0](https://github.com/polyend/TrackerBetaTesting/releases/tag/1.4.0).
+The `RETracker's` custom USB handler introduces new, non-official features to the `Polyend Tracker` that can be controlled from a computer via USB. One of these new features is a custom and working unidirectional file transfer functionality, since the Polyend Tracker's official file transfer functionality was broken and hence has been [removed by Polyend with the introduction of firmware v1.4.0](https://github.com/polyend/TrackerBetaTesting/releases/tag/1.4.0).
 
 
 ![RETracker screenshot](rsrc/retracker.png)
@@ -79,7 +79,7 @@ In case something still went wrong, please consult the `Polyend Tracker` user ma
 >However, I wouldn't recommend using `RETracker` before having made backups of the Tracker's SD card (projects, samples, ...).
 
 ## Supported Firmware Versions
-RETracker currently supports `Polyend Tracker` in firmware version 1.5.0, which is the most recent firmware as of this writing.
+RETracker currently supports `Polyend Tracker` in firmware version 1.5.0. There exists a private version for firmware 1.6.0 that has not been released to the public since Polyend entirely removed the code that was used to implement the patches for RETracker on firmware 1.5.0, which made porting them over to the 1.6.0 firmware more difficult.
 
 ## How does it work?
 Polyend Tracker firmware images ship in IntelHex format.
