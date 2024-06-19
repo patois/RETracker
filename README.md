@@ -225,6 +225,9 @@ Going back to an original `Polyend Tracker` firmware will be possible anytime us
 ## RETracker Wiki
 The RETracker wiki can be found [here](https://github.com/patois/RETracker/wiki).
 
+## Discussions / Forums
+Please [take part in discussions](https://github.com/patois/RETracker/discussions/7) and tell everybody about your experience with RETracker and how you're using it!
+
 ## Disclaimer
 The author does not take any responsibility for any damage this project may cause to your Polyend Tracker.
 By using RETracker or any information derived, you agree that you are using any of this project's code, data and other information at your own risk.
